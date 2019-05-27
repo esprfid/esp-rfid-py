@@ -1,0 +1,25 @@
+{
+	"schema": 2,
+	"known_networks": [
+		{
+			"ssid": "First network to try",
+			"password": "123",
+			"enables_webrepl": false
+		},
+		{
+			"ssid": "Secondary",
+			"password": "123",
+			"enables_webrepl": false
+		}
+	],
+	"access_point": {
+		"config": {
+			"essid": "ESP-RFID",
+			"channel": 11,
+			"hidden": false,
+			"password": "esp"
+		},
+		"enables_webrepl": true,
+		"start_policy": "fallback"
+	}
+}
