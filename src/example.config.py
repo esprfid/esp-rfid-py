@@ -48,6 +48,10 @@ modules['master_card'] = {
 #
 # Your database have to have structure from this template:
 # TODO
+#
+# SECURITY WARNING: ESP8266 can not verify HTTPS certificates, so communication with
+# Airtable API is vulnerable to MITM attack which can lead to API keys disclosure.
+# If you use Airtable module you have to use private WiFi and trust your ISP!
 
 #modules['airtable'] = {
 #	'base': 'https://api.airtable.com/v0/app123456789', # You can find it there: https://airtable.com/api
