@@ -21,7 +21,7 @@ Complete list of features is in [example config file](src/example.config.py).
 
 ## Goals
 
-Scalable and reliable modular, events-based architecture which allows:
+Scalable and reliable modular, events-based and asynchronous architecture which allows:
 
 - enable only needed features by plugins
 - code being less bug prone
