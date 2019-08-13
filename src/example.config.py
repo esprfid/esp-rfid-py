@@ -47,8 +47,9 @@ modules['master_card'] = {
 # and check Enabled).
 #
 # Your database have to have structure from this template:
-# TODO
-#
+
+# EXPERIMENTAL - Not tested well. Currently runs out of memory too often to be useable (because of HTTPS).
+
 # SECURITY WARNING: ESP8266 can not verify HTTPS certificates, so communication with
 # Airtable API is vulnerable to MITM attack which can lead to API keys disclosure.
 # If you use Airtable module you have to use private WiFi and trust your ISP!

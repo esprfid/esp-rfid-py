@@ -8,10 +8,9 @@ WifiManager.start_managing()
 
 # Modules
 import cards
-import master_card
 import relay
-#import airtable
-# TODO: Autoloading
+import master_card
+#import airtable  # EXPERIMENTAL - Not tested well. Currently runs out of memory too often to be useable (because of HTTPS).
 
 # Start event loop
 import uasyncio as asyncio
