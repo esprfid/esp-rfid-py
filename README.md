@@ -25,12 +25,12 @@ Scalable and reliable modular, events-based architecture which allows:
 
 - enable only needed features by plugins
 - code being less bug prone
-- easy coding of new features
-- thanks to Python the code is much easier to read
+- easy coding of new features (e.g. integrations to bigger systems)
+- thanks to Python the code is much easier to read and maintain
 
-## Disadvantages
+## Current disadvantages
 
 - Missing features and worse usability compared to ESP-RFID for now.
 - MicroPython consumes much more RAM, so some features will be almost impossible on ESP8266 (embedded web interface).
-- Will not support a many plugins enabled at one time.
-- Missing compatibility with ESP-RFID export files.
+- Will not support a many plugins enabled at one time (because of RAM).
+- Missing compatibility with ESP-RFID export files (because current MicroPython Wiegand library encodes data differently).
