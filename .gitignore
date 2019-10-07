@@ -2,3 +2,4 @@ firmware-combined.bin
 src/networks.json
 src/config.py
 src/webrepl_cfg.py
+backups/*
