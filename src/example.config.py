@@ -8,7 +8,7 @@ modules = {}
 
 modules['cards'] = {
 	'readers': [{
-		'type': 'wiegand',
+		'type': 'wiegand.py',
 		'pin_d0': 4, # ESP-RFID Relay Board
 		'pin_d1': 5
 	}]

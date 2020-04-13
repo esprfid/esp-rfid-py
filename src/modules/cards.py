@@ -5,7 +5,17 @@ import ujson
 import uasyncio as asyncio
 import events
 import cards_storage as storage
+
 import config
+readers = config.modules['cards']['readers']
+
+# Multiple cards readers not supported yet
+if len(readers) > 1:
+	raise NotImplementedError
+
+# Only wiegand reader is supported supported yet
+if readers[0]['type'] != 'wiegand.py':
+	raise NotImplementedError
 
 def on_card(card_number, facility_code, cards_read):
 	log.info("Card UID: %s", reader.last_card)
@@ -24,5 +34,5 @@ def on_card(card_number, facility_code, cards_read):
 	events.fire('card.card_validated', card)
 
 from wiegand import Wiegand
-reader = Wiegand(5, 4, on_card)
+reader = Wiegand(readers[0]['pin_d1'], readers[0]['pin_d0'], on_card)
 # TODO: Use config and support multiple readers
