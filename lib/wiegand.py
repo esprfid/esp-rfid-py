@@ -53,7 +53,7 @@ class Wiegand:
         if self.last_card is None:
             return None
         return ( self.last_card & CARD_MASK ) >> 1
-        
+
     def get_facility_code(self):
         if self.last_card is None:
             return None

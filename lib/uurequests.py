@@ -52,24 +52,18 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
             host, port = host.split(":", 1)
             port = int(port)
 
-        if not stream:
-            ai = usocket.getaddrinfo(host, port, 0, usocket.SOCK_STREAM)
-            ai = ai[0]
-            print(ai)
+        ai = usocket.getaddrinfo(host, port, 0, usocket.SOCK_STREAM)
+        ai = ai[0]
 
         resp_d = None
         if parse_headers is not False:
             resp_d = {}
 
+        s = usocket.socket(ai[0], ai[1], ai[2])
         try:
-            if not stream:
-                s = usocket.socket(ai[0], ai[1], ai[2])
-                s.connect(ai[-1])
-                if proto == "https:":
-                    s = ussl.wrap_socket(s, server_hostname=host)
-            else:
-                s = stream
-
+            s.connect(ai[-1])
+            if proto == "https:":
+                s = ussl.wrap_socket(s, server_hostname=host)
             s.write(b"%s /%s HTTP/1.0\r\n" % (method, path))
             if not "Host" in headers:
                 s.write(b"Host: %s\r\n" % host)
@@ -105,7 +99,7 @@ def request(method, url, data=None, json=None, headers={}, stream=None, parse_he
 
                 if l.startswith(b"Transfer-Encoding:"):
                     if b"chunked" in l:
-                        raise ValueError("Unsupported " + l)
+                        raise ValueError("Unsupported " + l.decode())
                 elif l.startswith(b"Location:") and 300 <= status <= 399:
                     if not redir_cnt:
                         raise ValueError("Too many redirects")

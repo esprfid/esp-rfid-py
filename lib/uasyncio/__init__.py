@@ -1,7 +1,9 @@
-# (c) 2014-2019 Paul Sokolovsky. MIT license.
+# (c) 2014-2020 Paul Sokolovsky. MIT license.
+from micropython import const
 import uerrno
 import uselect as select
 import usocket as _socket
+import uio
 from uasyncio.core import *
 
 
@@ -12,8 +14,8 @@ def set_debug(val):
     global DEBUG, log
     DEBUG = val
     if val:
-        import logging
-        log = logging.getLogger("uasyncio")
+        import ulogging
+        log = ulogging.getLogger("uasyncio")
 
 
 class PollEventLoop(EventLoop):
@@ -33,7 +35,7 @@ class PollEventLoop(EventLoop):
     def remove_reader(self, sock):
         if DEBUG and __debug__:
             log.debug("remove_reader(%s)", sock)
-        self.poller.unregister(sock)
+        self.poller.unregister(sock, False)
 
     def add_writer(self, sock, cb, *args):
         if DEBUG and __debug__:
@@ -87,23 +89,24 @@ class PollEventLoop(EventLoop):
                 self.call_soon(cb)
 
 
-class StreamReader:
+class Stream:
 
-    def __init__(self, polls, ios=None):
+    def __init__(self, polls, ios=None, extra=None):
         if ios is None:
             ios = polls
         self.polls = polls
         self.ios = ios
+        self.extra = extra
 
     def read(self, n=-1):
         while True:
-            yield IORead(self.polls)
             res = self.ios.read(n)
-            if res is not None:
+            if res is None:
+                yield IORead(self.polls)
+            elif res is uio.WANT_WRITE:
+                yield IOWrite(self.polls)
+            else:
                 break
-            # This should not happen for real sockets, but can easily
-            # happen for stream wrappers (ssl, websockets, etc.)
-            #log.warn("Empty read")
         if not res:
             yield IOReadDone(self.polls)
         return res
@@ -111,16 +114,19 @@ class StreamReader:
     def readexactly(self, n):
         buf = b""
         while n:
-            yield IORead(self.polls)
             res = self.ios.read(n)
             if res is None:
-                # See comment in read()
-                continue
-            if not res:
+                yield IORead(self.polls)
+            elif res is uio.WANT_WRITE:
+                yield IOWrite(self.polls)
+            elif not res:
                 yield IOReadDone(self.polls)
                 break
-            buf += res
-            n -= len(res)
+            else:
+                buf += res
+                n -= len(res)
+                # Give other tasks a chance to run
+                yield
         return buf
 
     def readline(self):
@@ -128,35 +134,23 @@ class StreamReader:
             log.debug("StreamReader.readline()")
         buf = b""
         while True:
-            yield IORead(self.polls)
             res = self.ios.readline()
             if res is None:
-                # See comment in read()
-                continue
-            if not res:
+                yield IORead(self.polls)
+            elif res is uio.WANT_WRITE:
+                yield IOWrite(self.polls)
+            elif not res:
                 yield IOReadDone(self.polls)
                 break
-            buf += res
-            if buf[-1] == 0x0a:
-                break
+            else:
+                buf += res
+                if buf[-1] == 0x0a:
+                    break
+                # Give other tasks a chance to run
+                yield
         if DEBUG and __debug__:
             log.debug("StreamReader.readline(): %s", buf)
         return buf
-
-    def aclose(self):
-        yield IOReadDone(self.polls)
-        # .ios wraps .polls, so closing ios will lead to closure of polls too
-        self.ios.close()
-
-    def __repr__(self):
-        return "<StreamReader %r %r>" % (self.polls, self.ios)
-
-
-class StreamWriter:
-
-    def __init__(self, s, extra):
-        self.s = s
-        self.extra = extra
 
     def awrite(self, buf, off=0, sz=-1):
         # This method is called awrite (async write) to not proliferate
@@ -168,26 +162,27 @@ class StreamWriter:
             sz = len(buf) - off
         if DEBUG and __debug__:
             log.debug("StreamWriter.awrite(): spooling %d bytes", sz)
-        while True:
-            res = self.s.write(buf, off, sz)
-            # If we spooled everything, return immediately
+        while sz:
+            res = self.ios.write(buf, off, sz)
+            # If we spooled everything, fast return
             if res == sz:
                 if DEBUG and __debug__:
                     log.debug("StreamWriter.awrite(): completed spooling %d bytes", res)
                 return
-            if res is None:
-                res = 0
-            if DEBUG and __debug__:
-                log.debug("StreamWriter.awrite(): spooled partial %d bytes", res)
-            assert res < sz
-            off += res
-            sz -= res
-            yield IOWrite(self.s)
-            #assert s2.fileno() == self.s.fileno()
-            if DEBUG and __debug__:
-                log.debug("StreamWriter.awrite(): can write more")
+            elif res is None:
+                yield IOWrite(self.polls)
+            elif res is uio.WANT_READ:
+                yield IORead(self.polls)
+            else:
+                if DEBUG and __debug__:
+                    log.debug("StreamWriter.awrite(): spooled partial %d bytes", res)
+                assert res != 0 and res < sz
+                off += res
+                sz -= res
+                # Give other tasks a chance to run
+                yield
 
-    # This function is tenative, subject to change
+    # This function is tentative, subject to change
     def awritestr(self, s):
         yield from self.awrite(s.encode())
 
@@ -197,14 +192,18 @@ class StreamWriter:
             yield from self.awrite(buf)
 
     def aclose(self):
-        yield IOWriteDone(self.s)
-        self.s.close()
+        yield IOWriteDone(self.polls)
+        self.ios.close()
+        self.polls.close()
 
     def get_extra_info(self, name, default=None):
         return self.extra.get(name, default)
 
     def __repr__(self):
-        return "<StreamWriter %r>" % self.s
+        return "<Stream %r %r>" % (self.polls, self.ios)
+
+
+StreamReader = StreamWriter = const(Stream)
 
 
 def open_connection(host, port, ssl=False):
@@ -218,47 +217,54 @@ def open_connection(host, port, ssl=False):
         s.connect(ai[-1])
     except OSError as e:
         if e.args[0] != uerrno.EINPROGRESS:
+            s.close()
             raise
     if DEBUG and __debug__:
         log.debug("open_connection: After connect")
     yield IOWrite(s)
-#    if __debug__:
-#        assert s2.fileno() == s.fileno()
     if DEBUG and __debug__:
         log.debug("open_connection: After iowait: %s", s)
+    s2 = s
     if ssl:
-        print("Warning: uasyncio SSL support is alpha")
         import ussl
-        s.setblocking(True)
-        s2 = ussl.wrap_socket(s)
-        s.setblocking(False)
-        return StreamReader(s, s2), StreamWriter(s2, {})
-    return StreamReader(s), StreamWriter(s, {})
+        s2 = ussl.wrap_socket(s, do_handshake=False)
+        s2.setblocking(False)
+    return StreamReader(s, s2), StreamWriter(s, s2)
 
 
-def start_server(client_coro, host, port, backlog=10):
+def start_server(client_coro, host, port, backlog=10, ssl=None):
     if DEBUG and __debug__:
         log.debug("start_server(%s, %s)", host, port)
     ai = _socket.getaddrinfo(host, port, 0, _socket.SOCK_STREAM)
     ai = ai[0]
     s = _socket.socket(ai[0], ai[1], ai[2])
-    s.setblocking(False)
-
-    s.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
-    s.bind(ai[-1])
-    s.listen(backlog)
-    while True:
-        if DEBUG and __debug__:
-            log.debug("start_server: Before accept")
-        yield IORead(s)
-        if DEBUG and __debug__:
-            log.debug("start_server: After iowait")
-        s2, client_addr = s.accept()
-        s2.setblocking(False)
-        if DEBUG and __debug__:
-            log.debug("start_server: After accept: %s", s2)
-        extra = {"peername": client_addr}
-        yield client_coro(StreamReader(s2), StreamWriter(s2, extra))
+    s2 = None
+    try:
+        s.setblocking(False)
+        s.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
+        s.bind(ai[-1])
+        s.listen(backlog)
+        while True:
+            if DEBUG and __debug__:
+                log.debug("start_server: Before accept")
+            yield IORead(s)
+            if DEBUG and __debug__:
+                log.debug("start_server: After iowait")
+            s2, client_addr = s.accept()
+            s3 = s2
+            if ssl:
+                import ussl
+                s3 = ussl.wrap_socket(s2, server_side=True, do_handshake=False)
+            s3.setblocking(False)
+            if DEBUG and __debug__:
+                log.debug("start_server: After accept: %s", s2)
+            extra = {"peername": client_addr}
+            yield client_coro(StreamReader(s2, s3), StreamWriter(s2, s3, extra))
+            s2 = s3 = None
+    finally:
+        if s2:
+            s2.close()
+        s.close()
 
 
 import uasyncio.core
