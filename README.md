@@ -1,7 +1,7 @@
 # esp-rfid-py
 Firmware for property access systems for common microcontrollers like ESP8266.
 
-Inspired by [ESP-RFID](https://github.com/esprfid/esp-rfid), written in MicroPython.
+Inspired by [ESP-RFID](https://github.com/esprfid/esp-rfid), written in Micro Python ((Pycopy)[https://github.com/pfalcon/pycopy] fork).
 
 ## Status
 
@@ -13,7 +13,6 @@ Compared to official [ESP-RFID firmware](https://github.com/esprfid/esp-rfid) la
 
 - Supports multiple Wiegand readers
 - Supports multiple relays with different configurations
-- Sync with AirTable.com backend (not working yet)
 - Master card - use "admin" tag to add new tags
 - Can run on all [platforms supported by MicroPython](http://www.micropython.org/download)
 
@@ -30,7 +29,7 @@ Scalable and reliable modular, events-based and asynchronous architecture which 
 
 ## Current disadvantages
 
-- Missing features and worse usability compared to ESP-RFID for now.
+- Missing features and worse usability compared to ESP-RFID for now - it have to be configured in config files and database managed in REPL by calling Python API.
 - MicroPython consumes much more RAM, so some features will be almost impossible on ESP8266 (embedded web interface).
 - Will not support a many plugins enabled at one time (because of RAM).
 - Missing compatibility with ESP-RFID export files (because current MicroPython Wiegand library encodes data differently).
