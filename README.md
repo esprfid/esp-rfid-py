@@ -16,6 +16,7 @@ Compared to official [ESP-RFID firmware](https://github.com/esprfid/esp-rfid) la
 - Master card - use "admin" tag to add new tags
 - Can run on all [platforms supported by MicroPython](http://www.micropython.org/download)
 - Can be controlled and send logs over MQTT
+- HTTP API
 
 Complete list of features is in [example config file](src/example.config.py).
 
