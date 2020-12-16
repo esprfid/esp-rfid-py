@@ -18,9 +18,7 @@ if readers[0]['type'] != 'wiegand.py':
 	raise NotImplementedError
 
 def on_card(card_number, facility_code, cards_read):
-	log.info("Card UID: %s", reader.last_card)
-	log.debug("Card UID/card_number: %s", card_number)
-	log.debug("Card UID/facility_code: %s", facility_code)
+	log.info("Card UID: %s", "{0:b}".format(reader.last_card))
 
 	if not reader.last_card:
 		log.error("Card UID not valid.")
