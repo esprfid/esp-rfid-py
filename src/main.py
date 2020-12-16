@@ -12,9 +12,8 @@ log.debug('Import modules')
 import cards
 log.debug('Import module relay')
 import relay
-log.debug('Import module master')
-import master_card
-#import airtable  # EXPERIMENTAL - Not tested well. Currently runs out of memory too often to be useable (because of HTTPS).
+log.debug('Import module mqtt_client')
+import mqtt_client
 
 # Start event loop
 log.debug('Start event loop')
