@@ -22,6 +22,10 @@ def on_card(card_number, facility_code, cards_read):
 	log.debug("Card UID/card_number: %s", card_number)
 	log.debug("Card UID/facility_code: %s", facility_code)
 
+	if not reader.last_card:
+		log.error("Card UID not valid.")
+		return
+
 	card = storage.get(reader.last_card)
 	if not card:
 		log.error("Card not known.")
