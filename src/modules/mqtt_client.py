@@ -40,14 +40,25 @@ async def conn_han(client):
 
 def callback(topic, msg, retained):
 	topic = topic.decode()
+	try:
+		msg = ujson.loads(msg)
+	except ValueError:
+		msg = {}
 	log.debug("Received message: topic: %s, body: %s, retained: %s", topic, msg, retained)
 
 	if topic == config['topics_prefix'] + 'open':
-		events.fire('card.card_validated', { 'mqtt_msg': msg })
+		events.fire('card.card_validated', msg)
 
+@events.on('card.card_validated')
+def send_access_log(data):
+	loop.create_task(client.publish(
+		config['topics_prefix'] + 'log/access',
+		ujson.dumps(data),
+		qos = 0
+	))
 
 mqtt_as.LINUX = True # So it will not try to manage WiFi
-mqtt_as.MQTTClient.DEBUG = True  # Optional: print diagnostic messages
+mqtt_as.MQTTClient.DEBUG = True  # Print diagnostic messages
 client = mqtt_as.MQTTClient(**config['connection'], subs_cb=callback, connect_coro=conn_han)
 loop = asyncio.get_event_loop()
 try:
