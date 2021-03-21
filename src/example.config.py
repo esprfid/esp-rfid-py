@@ -33,6 +33,17 @@ modules['relay'] = {
 	]
 }
 
+
+# WiFi
+#
+# Config is in file networks.json
+# Docs: https://github.com/mitchins/micropython-wifimanager
+#
+# If you need WiFi for mqtt and only with one network, consider managing by
+# mqtt_as, should be more robust: https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md#31-constructor
+
+#modules['wifi'] = True
+
 # This module allows adding new tags by special "master card".
 #
 # This can be any card in a database, just to is's data `'master': true`, then

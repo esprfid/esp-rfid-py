@@ -3,9 +3,10 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("main")
 
 # WiFi
-log.debug('Start WiFiManager')
-from wifi_manager import WifiManager
-WifiManager.start_managing()
+if 'wifi' in config.modules:
+	log.debug('Start WiFiManager')
+	from wifi_manager import WifiManager
+	WifiManager.start_managing()
 
 # Modules
 log.debug('Import modules')
