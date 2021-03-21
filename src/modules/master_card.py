@@ -17,7 +17,7 @@ def on_card_not_known(uid):
 	if adding_mode:
 		import cards_storage
 		if not cards_storage.get(uid):
-			cards_storage.save(uid, {'n': 'Added by master as {}. card.'.format(sum(1 for e in cards_storage.db) + 1)})
+			cards_storage.set(uid, {'n': 'Added by master as {}. card.'.format(sum(1 for e in cards_storage.db) + 1)})
 			log.info('Card added.')
 
 
