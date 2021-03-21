@@ -44,6 +44,22 @@ modules['relay'] = {
 
 #modules['wifi'] = True
 
+
+# Ethernet
+#
+# Example config for Olimex ESP32 boards.
+
+#import network
+#import machine
+#network.LAN(
+#	mdc = machine.Pin(23),
+#	mdio = machine.Pin(18),
+#	power = machine.Pin(12),
+#	phy_type = network.PHY_LAN8720,
+#	phy_addr = 0,
+#	clock_mode = network.ETH_CLOCK_GPIO17_OUT
+#).active(1)
+
 # This module allows adding new tags by special "master card".
 #
 # This can be any card in a database, just to is's data `'master': true`, then
