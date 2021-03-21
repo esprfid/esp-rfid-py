@@ -6,6 +6,7 @@
 # Lists modules and it's config what will be enabled. If you want to disable module, just comment it.
 modules = {}
 
+
 modules['cards'] = {
 	'readers': [{
 		'type': 'wiegand.py',
@@ -13,6 +14,7 @@ modules['cards'] = {
 		'pin_d1': 5
 	}]
 }
+
 
 modules['relay'] = {
 	'relays': [
@@ -60,6 +62,30 @@ modules['relay'] = {
 #	clock_mode = network.ETH_CLOCK_GPIO17_OUT
 #).active(1)
 
+
+# MQTT client
+#
+# Sends logs to topics (prepended by `topics_prefix`):
+# - log/access - someone opened doors
+# - log/access_denied - someone tried to open doors but have not access
+# - log/heartbeat - every 5 seconds sends:
+#   { "storage_free": bytes int, "mem_free": bytes int, "time": seconds int }
+#
+# Listens in this topics (prepended by `topics_prefix`):
+# - open - opens doors, can contain any message, will be send to access log
+# - set_cards - saves card, have to contain object with at least uid, other attributes will be saved to card, false
+
+modules['mqtt_client'] = {
+	'connection': { # You can use anything from the `MQTT parameters` here: https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md#31-constructor
+		'ssid': 'coworkingbrno.cz',
+		'wifi_pw': 'TheMostImportantQuestion',
+		'server': 'mqtt.flespi.io',
+		'user': 'xjZNynYM6cJUb8yehqS1Fn2Gp0h7FDW0KKD6VqJRsiAugYwlefaIq2cFRjCmLnbj'
+	},
+	'topics_prefix': 'door/brno/2/'
+}
+
+
 # This module allows adding new tags by special "master card".
 #
 # This can be any card in a database, just to is's data `'master': true`, then
@@ -69,6 +95,7 @@ modules['master_card'] = {
 	'status_led': 15, # LED on this pin will blink in adding mode.
 	'adding_mode_duration': 10 # How many seconds it will listen for cards to be added.
 }
+
 
 # Synchronize card database with an Airtable.com database.
 #
