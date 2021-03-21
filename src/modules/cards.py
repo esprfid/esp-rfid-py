@@ -17,8 +17,9 @@ if len(readers) > 1:
 if readers[0]['type'] != 'wiegand.py':
 	raise NotImplementedError
 
+
 def on_card(card_number, facility_code, cards_read):
-	log.info("Card UID: %s", "{0:b}".format(reader.last_card))
+	log.info("Card UID: %s", "{0:b} {0}".format(reader.last_card))
 
 	if not reader.last_card:
 		log.error("Card UID not valid.")
@@ -34,6 +35,7 @@ def on_card(card_number, facility_code, cards_read):
 		log.error("Card is disabled.")
 		return
 	events.fire('card.card_validated', card)
+
 
 from wiegand import Wiegand
 reader = Wiegand(readers[0]['pin_d1'], readers[0]['pin_d0'], on_card)
