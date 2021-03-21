@@ -11,9 +11,8 @@ import events
 import config
 relays = config.modules['relay']['relays']
 for r in relays:
-	r.update({
-		'pin_obj': Pin(r['pin'], Pin.OUT)
-	})
+	r.setdefault('invert', False)
+	r['pin_obj'] = Pin(r['pin'], Pin.OUT, value=r['invert'])
 
 
 @events.on('card.card_validated')
@@ -29,6 +28,6 @@ async def relay_task(config, card):
 		await asyncio.sleep(config['open_after'])
 
 	log.info("Opening relay on pin %d for %d seconds", config['pin'], config['close_after'])
-	config['pin_obj'].on()
+	config['pin_obj'].value(not config['invert'])
 	await asyncio.sleep(config['close_after'])
-	config['pin_obj'].off()
+	config['pin_obj'].value(config['invert'])

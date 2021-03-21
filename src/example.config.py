@@ -24,6 +24,11 @@ modules['relay'] = {
 			'pin': 12,
 			'open_after': 2, # Delay after second doors will be opened.
 			'close_after': 0.5
+		},
+		{
+			'pin': 14, # Reader LED
+			'invert': True, # GPIO value will be 1 on boot, 0 when open.
+			'close_after': 2
 		}
 	]
 }
