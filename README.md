@@ -14,9 +14,11 @@ Compared to official [ESP-RFID firmware](https://github.com/esprfid/esp-rfid) la
 - Supports multiple Wiegand readers
 - Supports multiple relays with different configurations
 - Master card - use "admin" tag to add new tags
-- Can run on all [platforms supported by MicroPython](http://www.micropython.org/download)
+- Can run on all [platforms supported by MicroPython](http://www.micropython.org/download) (theoretically, tested on ESP8266 and ESP32)
 - Can be controlled and send logs over MQTT
 - HTTP API
+- MQTT client (access log, heartbeat, open, cards management)
+- Cards import and export to JSON by REPL
 
 Complete list of features is in [example config file](src/example.config.py).
 

@@ -1,3 +1,5 @@
+# https://gitlab.com/superfly/dawndoor/-/blob/master/src/dawndoor/path.py
+
 import os
 
 SEP = '/'
