@@ -1,6 +1,7 @@
 import uasyncio as asyncio
 import logging
 log = logging.getLogger("mqtt_client")
+import cards
 import events
 import ujson
 import gc
@@ -37,6 +38,7 @@ async def main(client):
 
 async def conn_han(client):
 	await client.subscribe(config['topics_prefix'] + 'open', 1)
+	await client.subscribe(config['topics_prefix'] + 'cards/+', 1)
 
 def callback(topic, msg, retained):
 	topic = topic.decode()
@@ -49,6 +51,37 @@ def callback(topic, msg, retained):
 	if topic == config['topics_prefix'] + 'open':
 		events.fire('card.card_validated', msg)
 
+	if topic == config['topics_prefix'] + 'cards/fetch':
+		asyncio.get_event_loop().create_task(cards.fetch_cards(send_fetched_cards, msg))
+
+	if topic == config['topics_prefix'] + 'cards/list':
+		uids = [int.from_bytes(uid, "little") for uid in cards.storage.db]
+		loop.create_task(client.publish(
+			config['topics_prefix'] + 'cards/list/return',
+			ujson.dumps({"cards": uids}),
+			qos = 1
+		))
+
+	if topic == config['topics_prefix'] + 'cards/get':
+		loop.create_task(client.publish(
+			config['topics_prefix'] + 'cards/get/return',
+			ujson.dumps({"card": cards.storage.get(msg['uid'])}),
+			qos = 1
+		))
+
+	if topic == config['topics_prefix'] + 'cards/set':
+		cards.storage.set(msg['uid'], msg['card'])
+
+
+def send_fetched_cards(cards, metadata):
+	metadata['cards'] = cards
+	loop.create_task(client.publish(
+		config['topics_prefix'] + 'cards/fetch/return',
+		ujson.dumps(metadata),
+		qos = 1
+	))
+
+
 @events.on('card.card_validated')
 def send_access_log(data):
 	loop.create_task(client.publish(
@@ -60,8 +93,9 @@ def send_access_log(data):
 mqtt_as.LINUX = True # So it will not try to manage WiFi
 mqtt_as.MQTTClient.DEBUG = True  # Print diagnostic messages
 client = mqtt_as.MQTTClient(**config['connection'], subs_cb=callback, connect_coro=conn_han)
+
 loop = asyncio.get_event_loop()
 try:
-	loop.run_until_complete(main(client))
+	loop.create_task(main(client))
 finally:
 	client.close()  # Prevent LmacRxBlk:1 errors

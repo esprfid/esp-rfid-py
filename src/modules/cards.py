@@ -6,6 +6,8 @@ import uasyncio as asyncio
 import events
 import cards_storage as storage
 
+cards_fetching = False
+
 import config
 readers = config.modules['cards']['readers']
 
@@ -25,6 +27,10 @@ def on_card(card_number, facility_code, cards_read):
 		log.error("Card UID not valid.")
 		return
 
+	if isinstance(cards_fetching, list):
+		cards_fetching.append(reader.last_card)
+		return
+
 	card = storage.get(reader.last_card)
 	if not card:
 		log.error("Card not known.")
@@ -40,3 +46,21 @@ def on_card(card_number, facility_code, cards_read):
 from wiegand import Wiegand
 reader = Wiegand(readers[0]['pin_d1'], readers[0]['pin_d0'], on_card)
 # TODO: Use config and support multiple readers
+
+
+# For fetching multiple cards at once.
+# Will flash status LED when reading to indicate active fetching.
+async def fetch_cards(callback, metadata, timeout = 10):
+	from machine import Pin
+	led = Pin(config.status_led['pin'], Pin.OUT, value=config.status_led['invert'])
+
+	global cards_fetching
+	cards_fetching = []
+
+	# LED blinking
+	for _ in range(timeout * 4):
+		led.value(1 if led.value() == 0 else 0)
+		await asyncio.sleep(0.25)
+
+	callback(cards_fetching, metadata)
+	cards_fetching = False
