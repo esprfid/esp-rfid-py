@@ -77,12 +77,16 @@ modules['relay'] = {
 
 modules['mqtt_client'] = {
 	'connection': { # You can use anything from the `MQTT parameters` here: https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md#31-constructor
-		'ssid': 'coworkingbrno.cz',
+		'ssid': 'my_internal_wifi_network',
 		'wifi_pw': 'TheMostImportantQuestion',
 		'server': 'mqtt.flespi.io',
-		'user': 'xjZNynYM6cJUb8yehqS1Fn2Gp0h7FDW0KKD6VqJRsiAugYwlefaIq2cFRjCmLnbj'
+		'user': 'xjZNyniAugYwlefaIq2cFRjCmLnbjFn2Gp0hYM6cJUb8yehqS1qJRs7FDW0KKD6V'
 	},
-	'topics_prefix': 'door/brno/2/'
+	'topics_prefix': 'door/brno/2/',
+	'restart': {
+		'pin': 32, # Relay 1
+		'pin_value': 1
+	}
 }
 
 

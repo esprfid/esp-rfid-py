@@ -8,6 +8,7 @@ import gc
 from uos import statvfs
 import utime
 import mqtt_as
+import machine
 
 import config as config_all
 config = config_all.modules['mqtt_client']
@@ -21,6 +22,7 @@ async def main(client):
 		except OSError:
 			log.warning("MQTT connection failed.")
 
+	global watchdog_state
 	while True:
 		await asyncio.sleep(5)
 		log.debug("Sending heartbeat")
@@ -35,6 +37,22 @@ async def main(client):
 			}),
 			qos = 0
 		)
+		watchdog_state = 3
+
+
+watchdog_state = 6  # So restart if it will not connect in 1 minute after boot.
+async def watchdog():
+	global watchdog_state
+	while True:
+		await asyncio.sleep(5)
+		watchdog_state -= 1
+		if watchdog_state == 0:
+			try:
+				machine.Pin(config['restart']['pin'], machine.Pin.OUT, value=config['restart']['pin_value'])
+			except Exception as e:
+				log.warning("Power restart not successful: %s", e)
+				machine.reset()
+
 
 async def conn_han(client):
 	await client.subscribe(config['topics_prefix'] + 'open', 1)
@@ -97,5 +115,7 @@ client = mqtt_as.MQTTClient(**config['connection'], subs_cb=callback, connect_co
 loop = asyncio.get_event_loop()
 try:
 	loop.create_task(main(client))
+	if 'restart' in config:
+		loop.create_task(watchdog())
 finally:
 	client.close()  # Prevent LmacRxBlk:1 errors
